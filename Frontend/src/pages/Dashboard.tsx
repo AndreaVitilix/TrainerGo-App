@@ -193,6 +193,15 @@ const CoursesPage = () => {
                 <p style={{color: theme.textMuted}}>Logged as: {userRole}</p>
             </div>
             {userRole === 'Coach' && <button onClick={() => { setFormData({}); setIsCourseModalOpen(true); }} style={styles.btnGold}>+ Crea Corso</button>}
+            {/* MOSTRA IL TASTO SOLO SE IL RUOLO È COACH */}
+{userRole === 'Coach' && (
+  <button 
+    onClick={() => navigate('/atleti')} 
+    style={{...styles.btnOutline, background: '#333'}}
+  >
+     📋 Gestisci Atleti
+  </button>
+)}
         </div>
 
         {isLoading ? <p>Caricamento...</p> : (

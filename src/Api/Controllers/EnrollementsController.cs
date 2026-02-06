@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Application.DTOs;
 
 namespace Api.Controllers
 {
@@ -126,5 +127,5 @@ namespace Api.Controllers
     }
 
     // DTO veloce per passare l'email
-    public class EmailDto { public string Email { get; set; } }
+
 }

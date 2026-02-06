@@ -13,5 +13,7 @@ namespace Infrastructure.Data
         public DbSet<Payment> Payments { get; set; } // Se hai ancora il modello Payment
         public DbSet<Item> Items { get; set; }
         public DbSet<Enrollment> Enrollments { get; set; }
+        public DbSet<AthleteProfile> AthleteProfiles { get; set; }
+        public DbSet<WorkoutPlan> WorkoutPlans { get; set; }
     }
 }
