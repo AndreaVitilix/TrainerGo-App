@@ -20,27 +20,33 @@ namespace Api.Controllers
         }
 
         // ==========================================
-        // METODO 1: GET SCHEDE ATLETA SPECIFICO (Solo Coach)
-        // Usato dal coach per vedere lo storico schede di un atleta che segue
+        // METODO 1: GET SCHEDE PER IL COACH
+        // Recupera i piani di un atleta specifico tramite il suo UserId
         // ==========================================
         [HttpGet("athlete/{athleteUserId}")]
         public async Task<IActionResult> GetPlans(Guid athleteUserId)
         {
+            // Filtra rigorosamente per l'ID dell'atleta richiesto
             var plans = await _context.WorkoutPlans
                 .Where(w => w.AthleteId == athleteUserId)
                 .OrderByDescending(w => w.CreatedAt)
                 .ToListAsync();
+
             return Ok(plans);
         }
 
         // ==========================================
-        // METODO 2: LE MIE SCHEDE (Nuovo! Solo Atleta)
-        // Permette all'utente loggato di vedere tutti i suoi allenamenti
+        // METODO 2: GET LE MIE SCHEDE (Per l'Atleta)
+        // Recupera i piani dell'atleta loggato usando l'ID dal Token
         // ==========================================
         [HttpGet("my-plans")]
         public async Task<IActionResult> GetMyPlans()
         {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            // Prende l'ID dell'utente dal Token (sicuro al 100%)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+            
+            var userId = Guid.Parse(userIdClaim.Value);
             
             var plans = await _context.WorkoutPlans
                 .Where(w => w.AthleteId == userId)
@@ -52,34 +58,47 @@ namespace Api.Controllers
 
         // ==========================================
         // METODO 3: CREA NUOVA SCHEDA (Solo Coach)
-        // Salva una nuova scheda formattata in HTML per un atleta
+        // Crea una scheda e la associa correttamente all'atleta indicato
         // ==========================================
         [HttpPost]
-        public async Task<IActionResult> CreatePlan(WorkoutPlan plan)
+        public async Task<IActionResult> CreatePlan([FromBody] WorkoutPlan plan)
         {
+            // 1. Identifichiamo il Coach dal Token
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null) return Unauthorized();
-
             var coachId = Guid.Parse(userIdClaim.Value);
+
+            // 2. Validazione: Verifichiamo che l'AthleteId sia stato inviato dal frontend
+            if (plan.AthleteId == Guid.Empty)
+            {
+                return BadRequest("Errore: AthleteId mancante. Impossibile associare la scheda.");
+            }
             
+            // 3. Prepariamo l'oggetto per il salvataggio
             plan.Id = Guid.NewGuid();
-            plan.CoachId = coachId;
+            plan.CoachId = coachId; // Il coach è chi crea la scheda
             plan.CreatedAt = DateTime.UtcNow;
+
+            // Nota: plan.AthleteId rimane quello inviato nel body JSON dal frontend
+            // Questo assicura la distinzione tra Atleta 1 e Atleta 2
 
             _context.WorkoutPlans.Add(plan);
             await _context.SaveChangesAsync();
+            
             return Ok(plan);
         }
 
         // ==========================================
         // METODO 4: ELIMINA SCHEDA (Solo Coach)
-        // Rimuove una scheda di allenamento definitiva
         // ==========================================
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePlan(Guid id)
         {
             var plan = await _context.WorkoutPlans.FindAsync(id);
             if (plan == null) return NotFound();
+            
+            // (Opzionale) Potresti aggiungere un controllo per assicurarti 
+            // che solo il coach che l'ha creata possa cancellarla
             
             _context.WorkoutPlans.Remove(plan);
             await _context.SaveChangesAsync();
