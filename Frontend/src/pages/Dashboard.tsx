@@ -132,20 +132,48 @@ const CoursesPage = () => {
   const theme = { bg: '#09090b', cardBg: '#18181b', textMain: '#fafafa', textMuted: '#a1a1aa', accent: '#fbbf24', border: '#27272a', danger: '#ef4444' };
   const styles = {
     page: { minHeight: '100vh', backgroundColor: theme.bg, color: theme.textMain, fontFamily: "'Inter', sans-serif" },
-    header: { background: 'rgba(24, 24, 27, 0.9)', borderBottom: `1px solid ${theme.border}`, padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky' as const, top: 0, zIndex: 10 },
+    header: { background: 'rgba(24, 24, 27, 0.95)', borderBottom: `1px solid ${theme.border}`, padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky' as const, top: 0, zIndex: 10, backdropFilter: 'blur(10px)' },
     container: { maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' },
-    card: { backgroundColor: theme.cardBg, borderRadius: '12px', border: `1px solid ${theme.border}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' as const, padding: '20px' },
     
-    // Bottoni
-    btnGold: { backgroundColor: theme.accent, color: 'black', padding: '10px 20px', borderRadius: '4px', border: 'none', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase' as const },
-    btnJoin: { width: '100%', backgroundColor: theme.accent, color: 'black', padding: '12px', borderRadius: '6px', border: 'none', fontWeight: 800, cursor: 'pointer', marginTop: '15px' },
-    btnLeave: { width: '100%', backgroundColor: 'transparent', color: theme.danger, border: `1px solid ${theme.danger}`, padding: '12px', borderRadius: '6px', fontWeight: 800, cursor: 'pointer', marginTop: '15px' },
+    // Griglia
+    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' },
+    card: { backgroundColor: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' as const, padding: '24px', transition: 'transform 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' },
     
+    // Titoli e Testi
+    cardTitle: { margin: '0 0 8px 0', color: 'white', fontSize: '1.25rem', fontWeight: 700 },
+    coachName: { color: theme.accent, fontSize:'0.85rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '1px', marginBottom: '16px' },
+    description: { color: theme.textMuted, fontSize: '0.95rem', lineHeight: '1.5', flex: 1, marginBottom: '20px' },
+
+    // --- NUOVI PULSANTI PRO ---
+    // 1. Bottone Principale (Oro)
+    btnGold: { 
+        backgroundColor: theme.accent, color: 'black', padding: '12px 20px', borderRadius: '8px', border: 'none', 
+        fontWeight: 800, cursor: 'pointer', textTransform: 'uppercase' as const, fontSize: '0.85rem', letterSpacing: '0.5px',
+        transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+    },
+    // 2. Bottone Secondario (Scuro con Bordo)
+    btnOutline: { 
+        backgroundColor: 'transparent', color: 'white', padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, 
+        fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', flex: 1, textAlign: 'center' as const, transition: 'background 0.2s'
+    },
+    // 3. Bottone Danger (Rosso soft)
+    btnDanger: { 
+        backgroundColor: 'rgba(239, 68, 68, 0.15)', color: theme.danger, padding: '10px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', 
+        fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', flex: 1, textAlign: 'center' as const, transition: 'background 0.2s'
+    },
+    
+    // Container pulsanti Coach
+    coachActions: { display: 'flex', flexDirection: 'column' as const, gap: '10px', marginTop: 'auto', borderTop: `1px solid ${theme.border}`, paddingTop: '20px' },
+    rowActions: { display: 'flex', gap: '10px' },
+
+    // Pulsanti User (Atleta)
+    btnJoin: { width: '100%', backgroundColor: theme.accent, color: 'black', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 800, cursor: 'pointer', marginTop: 'auto', fontSize: '0.9rem', boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)' },
+    btnLeave: { width: '100%', backgroundColor: 'transparent', color: theme.danger, border: `2px solid ${theme.danger}`, padding: '12px', borderRadius: '8px', fontWeight: 800, cursor: 'pointer', marginTop: 'auto' },
+
     // Modale
-    modalOverlay: { position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 },
-    modalContent: { background: '#18181b', padding: '2rem', borderRadius: '12px', width: '90%', maxWidth: '500px', border: `1px solid ${theme.border}` },
-    input: { width: '100%', padding: '12px', backgroundColor: '#09090b', border: `1px solid ${theme.border}`, borderRadius: '6px', color: 'white', marginBottom: '15px' }
+    modalOverlay: { position: 'fixed' as const, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 },
+    modalContent: { background: '#18181b', padding: '2.5rem', borderRadius: '16px', width: '90%', maxWidth: '500px', border: `1px solid ${theme.border}`, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' },
+    input: { width: '100%', padding: '14px', backgroundColor: '#09090b', border: `1px solid ${theme.border}`, borderRadius: '8px', color: 'white', marginBottom: '15px', fontSize: '1rem', outline: 'none' }
   };
 
   return (
@@ -169,26 +197,49 @@ const CoursesPage = () => {
 
         {isLoading ? <p>Caricamento...</p> : (
           <div style={styles.grid}>
-            {courses.map((course) => {
+       {courses.map((course) => {
                 const isEnrolled = myEnrollmentIds.includes(course.id);
                 return (
                   <div key={course.id} style={styles.card}>
-                    <h3 style={{margin:'0 0 10px 0', color:'white'}}>{course.name}</h3>
-                    <p style={{color: theme.accent, fontSize:'0.9rem', fontWeight:600}}>Coach: {course.instructor}</p>
-                    <p style={{color: theme.textMuted}}>{course.description}</p>
                     
+                    {/* Header Card */}
+                    <div>
+                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'start'}}>
+                            <h3 style={styles.cardTitle}>{course.name}</h3>
+                            <span style={{background:'#27272a', padding:'4px 8px', borderRadius:'6px', fontSize:'0.8rem', fontWeight:600}}>{course.priceMonthly}€</span>
+                        </div>
+                        <div style={styles.coachName}>⚡ {course.instructor}</div>
+                    </div>
+
+                    <p style={styles.description}>
+                        {course.description || "Nessuna descrizione disponibile."}
+                        <br/><br/>
+                        <span style={{color:'white', fontWeight:600}}>🕒 {course.schedule}</span>
+                    </p>
+                    
+                    {/* --- ZONA PULSANTI --- */}
                     {userRole === 'Coach' ? (
-                        <div style={{display:'grid', gap:'10px', marginTop:'auto'}}>
-                            <button onClick={() => openStudentsModal(course.id)} style={{...styles.btnGold, width:'100%', background:'#333', color:'white'}}>👥 Gestisci Iscritti</button>
-                            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
-                                <button onClick={() => { setFormData(course); setIsCourseModalOpen(true); }} style={{padding:'10px', cursor:'pointer'}}>Modifica</button>
-                                <button onClick={() => handleDeleteCourse(course.id)} style={{padding:'10px', cursor:'pointer', color: theme.danger}}>Elimina</button>
+                        <div style={styles.coachActions}>
+                            {/* Bottone ORO Grande */}
+                            <button onClick={() => openStudentsModal(course.id)} style={styles.btnGold}>
+                                👥 Gestisci Iscritti
+                            </button>
+                            
+                            {/* Bottoni Secondari Affiancati */}
+                            <div style={styles.rowActions}>
+                                <button onClick={() => { setFormData(course); setIsCourseModalOpen(true); }} style={styles.btnOutline}>
+                                    ✏️ Modifica
+                                </button>
+                                <button onClick={() => handleDeleteCourse(course.id)} style={styles.btnDanger}>
+                                    🗑️ Elimina
+                                </button>
                             </div>
                         </div>
                     ) : (
+                        // Pulsanti Atleta
                         isEnrolled 
                         ? <button onClick={() => handleLeave(course.id)} style={styles.btnLeave}>DISISCRIVITI</button>
-                        : <button onClick={() => handleJoin(course.id)} style={styles.btnJoin}>ISCRIVITI ORA</button>
+                        : <button onClick={() => handleJoin(course.id)} style={styles.btnJoin}>ISCRIVITI ORA 🔥</button>
                     )}
                   </div>
                 );
