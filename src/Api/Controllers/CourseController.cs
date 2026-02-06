@@ -18,43 +18,33 @@ namespace Api.Controllers
             _repository = repository;
         }
 
-        // GET: api/Courses
-        // Logica: Il Coach vede i suoi, l'User vede TUTTO.
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            // 1. Chi sei?
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "User"; // Leggiamo il Ruolo dal Token
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "User";
 
             if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
             var userId = Guid.Parse(userIdString);
 
-            // 2. Prendiamo tutti i corsi
             var allCourses = await _repository.GetAllAsync();
 
-            // 3. LOGICA DI FILTRO
             if (userRole == "Coach")
             {
-                // SEI UN COACH: Vedi solo quelli che hai creato tu
                 var myCourses = allCourses.Where(c => c.CoachId == userId).ToList();
                 return Ok(myCourses);
             }
-            else
-            {
-                // SEI UN UTENTE (ATLETA): Vedi TUTTI i corsi disponibili per iscriverti
-                return Ok(allCourses);
-            }
+            
+            return Ok(allCourses);
         }
 
-        // POST: api/Courses (Solo Coach)
         [HttpPost]
         public async Task<IActionResult> Create(Course course)
         {
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
             
-            course.CoachId = Guid.Parse(userIdString); // Assegna il creatore
+            course.CoachId = Guid.Parse(userIdString);
             course.Id = Guid.NewGuid();
             course.CreatedAt = DateTime.UtcNow;
 
@@ -62,7 +52,35 @@ namespace Api.Controllers
             return Ok(course);
         }
 
-        // DELETE: api/Courses/{id}
+        // ==========================================
+        // PUT: api/Courses/{id}
+        // ==========================================
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] CourseUpdateDto dto)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+            var userId = Guid.Parse(userIdString);
+
+            var existingCourse = await _repository.GetByIdAsync(id);
+            if (existingCourse == null) return NotFound("Corso non trovato.");
+
+            if (existingCourse.CoachId != userId)
+            {
+                return StatusCode(403, "Non puoi modificare un corso che non hai creato tu.");
+            }
+
+            // MAPPATURA CAMPI
+            existingCourse.Name = dto.Name;
+            existingCourse.Instructor = dto.Instructor;
+            existingCourse.PriceMonthly = dto.PriceMonthly; // Ora i tipi coincidono (decimal)
+            existingCourse.Schedule = dto.Schedule;
+            existingCourse.Description = dto.Description;
+
+            await _repository.UpdateAsync(existingCourse);
+            return Ok(existingCourse);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -75,36 +93,23 @@ namespace Api.Controllers
             var course = await _repository.GetByIdAsync(id);
             if (course == null) return NotFound();
 
-            // Solo il Coach proprietario o un Admin può cancellare
-            if (userRole != "Admin" && course.CoachId != userId) 
+            if (userRole != "Admin" && course.CoachId != userId)
             {
-                return StatusCode(403, "Non puoi cancellare un corso che non è tuo.");
+                return StatusCode(403, "Operazione non consentita.");
             }
 
             await _repository.DeleteAsync(id);
             return Ok(new { message = "Corso eliminato" });
         }
+    }
 
-        // PUT: api/Courses
-        [HttpPut]
-        public async Task<IActionResult> Update(Course course)
-        {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var userId = Guid.Parse(userIdString!);
-
-            var existingCourse = await _repository.GetByIdAsync(course.Id);
-            if (existingCourse == null) return NotFound();
-
-            if (existingCourse.CoachId != userId)
-            {
-                return StatusCode(403, "Non puoi modificare un corso che non è tuo.");
-            }
-
-            // Manteniamo l'ID proprietario originale
-            course.CoachId = existingCourse.CoachId; 
-            
-            await _repository.UpdateAsync(course);
-            return Ok(course);
-        }
+    // --- DTO CORRETTO CON DECIMAL ---
+    public class CourseUpdateDto 
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Instructor { get; set; } = string.Empty;
+        public decimal PriceMonthly { get; set; } // <--- CAMBIATO DA float A decimal
+        public string Schedule { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
     }
 }

@@ -1,6 +1,6 @@
 using Application.Interfaces;
 using Application.Models;
-using Application.DTOs; // Per EmailDto
+using Application.DTOs;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +21,10 @@ namespace Api.Controllers
             _context = context;
         }
 
-        // 1. COACH: AGGIUNGI ATLETA
+        // ==========================================
+        // METODO 1: AGGIUNGI ATLETA (Solo Coach)
+        // Permette a un coach di iniziare a seguire un utente tramite email
+        // ==========================================
         [HttpPost("add-by-email")]
         public async Task<IActionResult> AddAthleteByEmail([FromBody] EmailDto request)
         {
@@ -49,7 +52,10 @@ namespace Api.Controllers
             return Ok(new { message = "Atleta aggiunto alla tua lista!" });
         }
 
-        // 2. COACH: LISTA I MIEI ATLETI
+        // ==========================================
+        // METODO 2: LISTA I MIEI ATLETI (Solo Coach)
+        // Restituisce tutti gli atleti seguiti dal coach loggato
+        // ==========================================
         [HttpGet("my-athletes")]
         public async Task<IActionResult> GetMyAthletes()
         {
@@ -73,7 +79,28 @@ namespace Api.Controllers
             return Ok(athletes);
         }
 
-        // 3. GET PROFILO COMPLETO
+        // ==========================================
+        // METODO 3: IL MIO PROFILO (Nuovo! Solo Atleta)
+        // Permette all'utente loggato di vedere i propri dati fisici
+        // ==========================================
+        [HttpGet("my-profile")]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            
+            var profile = await _context.AthleteProfiles
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+
+            if (profile == null) return NotFound("Profilo non ancora creato dal tuo coach.");
+
+            return Ok(profile);
+        }
+
+        // ==========================================
+        // METODO 4: GET PROFILO SPECIFICO (Solo Coach)
+        // Usato dal coach per vedere i dettagli di un atleta specifico tramite ID
+        // ==========================================
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetProfile(Guid userId)
         {
@@ -86,7 +113,10 @@ namespace Api.Controllers
             return Ok(profile);
         }
 
-        // 4. AGGIORNA SCHEDA TECNICA (Utilizza il DTO per evitare conflitti con l'oggetto User)
+        // ==========================================
+        // METODO 5: AGGIORNA SCHEDA TECNICA (Coach o Atleta)
+        // Aggiorna peso, altezza, obiettivi. Le note sono modificabili solo dal Coach.
+        // ==========================================
         [HttpPut]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
         {
@@ -95,7 +125,6 @@ namespace Api.Controllers
             var existing = await _context.AthleteProfiles.FindAsync(dto.Id);
             if (existing == null) return NotFound("Profilo non trovato.");
 
-            // Aggiorna dati comuni
             existing.Weight = dto.Weight;
             existing.Height = dto.Height;
             existing.Goals = dto.Goals;
@@ -103,7 +132,6 @@ namespace Api.Controllers
             existing.WeeklyWorkouts = dto.WeeklyWorkouts;
             existing.UpdatedAt = DateTime.UtcNow;
 
-            // Solo il COACH può modificare le note private
             if (role == "Coach") 
             {
                 existing.CoachNotes = dto.CoachNotes;
@@ -113,8 +141,6 @@ namespace Api.Controllers
             return Ok(existing);
         }
     }
-
-    // --- DTO DEFINITI FUORI DALLA CLASSE CONTROLLER PER EVITARE ERRORI DI SINTASSI ---
 
     public class UpdateProfileDto 
     {
