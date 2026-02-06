@@ -1,0 +1,147 @@
+/* --- FILE: src/pages/Auth.css --- */
+
+/* Wrapper Generale (Sfondo grigio chiaro) */
+.auth-wrapper {
+    background-color: #f0f2f5;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+    padding: 20px; /* Padding per mobile */
+}
+
+/* La Card Bianca */
+.auth-card {
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 450px; /* Larghezza standard */
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* Logo e Testi */
+.brand-logo {
+    font-size: 26px;
+    font-weight: bold;
+    color: #3c4043;
+    margin-bottom: 8px;
+}
+.brand-logo span { color: #1a73e8; }
+
+.auth-title {
+    color: #202124;
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.auth-subtitle {
+    color: #5f6368;
+    font-size: 16px;
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+/* SELETTORE RUOLO (Stile Pillola) */
+.role-selector {
+    display: flex;
+    background-color: #f1f3f4;
+    padding: 4px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.role-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #5f6368;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.role-tab.active {
+    background-color: white;
+    color: #1a73e8;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* Form e Input */
+.input-group {
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+/* Riga doppia (Nome + Cognome) */
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 16px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border 0.2s;
+    background: #fff;
+    color: #202124;
+}
+
+.input-field:focus {
+    border: 2px solid #1a73e8;
+    padding: 11px 13px; /* Compensa il bordo */
+    outline: none;
+}
+
+/* Bottoni e Link */
+.auth-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+}
+
+.link-secondary {
+    color: #1a73e8;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #1557b0;
+}
+
+.error-msg {
+    color: #d93025;
+    font-size: 13px;
+    text-align: left;
+    margin-bottom: 15px;
+    background: #fce8e6;
+    padding: 8px;
+    border-radius: 4px;
+}

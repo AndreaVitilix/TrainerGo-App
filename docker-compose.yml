@@ -1,0 +1,72 @@
+services:
+  # 1. Database PostgreSQL
+  db:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: backend_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d backend_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Backend .NET 8
+  backend:
+    build:
+      context: .
+      dockerfile: src/Api/Dockerfile
+    container_name: dotnet_backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=backend_db;Username=postgres;Password=your_password
+      - Jwt__Key=Questa_E_Una_Chiave_Segreta_Molto_Lunga_Almeno_32_Caratteri
+      - Jwt__Issuer=MyBackendApp
+      - Jwt__Audience=MyFrontendApp
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3. pgAdmin (Interfaccia Web per il Database)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_container
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@test.it
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+  # 4. Frontend React (Vite + TypeScript)
+  # 4. Frontend React
+  frontend:
+    build:
+      context: ./Frontend       # <--- PRIMA ERA ./src/Frontend
+      dockerfile: Dockerfile
+    container_name: react_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./Frontend:/app         # <--- PRIMA ERA ./src/Frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8080/api
+    depends_on:
+      - backend
+volumes:
+  postgres_data:
