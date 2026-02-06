@@ -8,7 +8,7 @@ namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // <--- Serve il Token per entrare qui
+    [Authorize]
     public class CoursesController : ControllerBase
     {
         private readonly IGenericRepository<Course> _repository;
@@ -18,57 +18,65 @@ namespace Api.Controllers
             _repository = repository;
         }
 
-        // GET: api/Courses (RESTITUISCE SOLO I CORSI DEL COACH LOGGATO)
+        // GET: api/Courses
+        // Logica: Il Coach vede i suoi, l'User vede TUTTO.
         [HttpGet]
-        public async Task<IActionResult> GetMyCourses()
+        public async Task<IActionResult> GetAll()
         {
-            // 1. Recuperiamo l'ID dell'utente dal Token
+            // 1. Chi sei?
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "User"; // Leggiamo il Ruolo dal Token
+
             if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
             var userId = Guid.Parse(userIdString);
 
-            // 2. Recuperiamo TUTTI i corsi
+            // 2. Prendiamo tutti i corsi
             var allCourses = await _repository.GetAllAsync();
 
-            // 3. FILTRIAMO: Teniamo solo quelli creati da QUESTO utente
-            // (Nota: in un sistema più grande il filtro si farebbe nel DB, ma per ora va bene qui)
-            var myCourses = allCourses.Where(c => c.CoachId == userId).ToList();
-
-            return Ok(myCourses);
+            // 3. LOGICA DI FILTRO
+            if (userRole == "Coach")
+            {
+                // SEI UN COACH: Vedi solo quelli che hai creato tu
+                var myCourses = allCourses.Where(c => c.CoachId == userId).ToList();
+                return Ok(myCourses);
+            }
+            else
+            {
+                // SEI UN UTENTE (ATLETA): Vedi TUTTI i corsi disponibili per iscriverti
+                return Ok(allCourses);
+            }
         }
 
-        // POST: api/Courses (CREA ASSEGNANDO AUTOMATICAMENTE L'AUTORE)
+        // POST: api/Courses (Solo Coach)
         [HttpPost]
         public async Task<IActionResult> Create(Course course)
         {
-            // 1. Chi sta creando il corso?
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
             
-            // 2. Assegniamo l'ID automaticamente
-            course.CoachId = Guid.Parse(userIdString); 
+            course.CoachId = Guid.Parse(userIdString); // Assegna il creatore
             course.Id = Guid.NewGuid();
             course.CreatedAt = DateTime.UtcNow;
-
-            // (Opzionale) Se l'Instructor name è vuoto, potremmo volerlo recuperare dal DB User, 
-            // ma per ora fidiamoci di quello che manda il frontend o lasciamolo come stringa.
 
             await _repository.AddAsync(course);
             return Ok(course);
         }
 
-        // DELETE: api/Courses/{id} (CANCELLA SOLO SE È TUO)
+        // DELETE: api/Courses/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var userId = Guid.Parse(userIdString!);
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+            var userId = Guid.Parse(userIdString);
 
             var course = await _repository.GetByIdAsync(id);
             if (course == null) return NotFound();
 
-            // SICUREZZA: Non puoi cancellare il corso di un altro!
-            if (course.CoachId != userId) 
+            // Solo il Coach proprietario o un Admin può cancellare
+            if (userRole != "Admin" && course.CoachId != userId) 
             {
                 return StatusCode(403, "Non puoi cancellare un corso che non è tuo.");
             }
@@ -77,7 +85,7 @@ namespace Api.Controllers
             return Ok(new { message = "Corso eliminato" });
         }
 
-        // PUT: api/Courses (AGGIORNA SOLO SE È TUO)
+        // PUT: api/Courses
         [HttpPut]
         public async Task<IActionResult> Update(Course course)
         {
@@ -87,14 +95,13 @@ namespace Api.Controllers
             var existingCourse = await _repository.GetByIdAsync(course.Id);
             if (existingCourse == null) return NotFound();
 
-            // SICUREZZA
             if (existingCourse.CoachId != userId)
             {
                 return StatusCode(403, "Non puoi modificare un corso che non è tuo.");
             }
 
-            // Manteniamo l'ID del proprietario originale per sicurezza
-            course.CoachId = userId; 
+            // Manteniamo l'ID proprietario originale
+            course.CoachId = existingCourse.CoachId; 
             
             await _repository.UpdateAsync(course);
             return Ok(course);
