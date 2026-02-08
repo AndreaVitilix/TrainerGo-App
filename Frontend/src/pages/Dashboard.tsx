@@ -160,8 +160,16 @@ const CoursesPage = () => {
           TRAINER<span style={{ color: 'white' }}>GO</span>
         </div>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          {userRole === 'User' && <button onClick={() => navigate('/mio-profilo')} style={{ background: 'none', border: 'none', color: theme.gold, cursor: 'pointer', fontWeight: 700 }}>IL MIO PROFILO</button>}
-          <button onClick={handleLogout} style={{ padding: '8px 16px', borderRadius: '8px', border: `1px solid ${theme.border}`, color: 'white', background: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>LOGOUT</button>
+{userRole === 'User' && (
+  <>
+    <button onClick={() => navigate('/diario')} style={{ background: theme.gold, border: 'none', color: 'black', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 800, marginRight: '10px' }}>
+      📓 IL MIO DIARIO
+    </button>
+    <button onClick={() => navigate('/mio-profilo')} style={{ background: 'none', border: `1px solid ${theme.border}`, color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>
+      PROFILO
+    </button>
+  </>
+)}          <button onClick={handleLogout} style={{ padding: '8px 16px', borderRadius: '8px', border: `1px solid ${theme.border}`, color: 'white', background: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>LOGOUT</button>
         </div>
       </header>
 
@@ -172,6 +180,7 @@ const CoursesPage = () => {
           <div>
             <h1 style={{ fontSize: '2.5rem', margin: 0, fontWeight: 800 }}>Dashboard</h1>
             <p style={{ color: theme.muted, marginTop: '5px' }}>Benvenuto! Ecco la panoramica delle tue attività.</p>
+            
           </div>
 
           {/* BOX STATISTICHE (Visibile solo al Coach) */}

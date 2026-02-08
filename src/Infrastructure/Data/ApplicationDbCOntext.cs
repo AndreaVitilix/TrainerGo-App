@@ -15,5 +15,7 @@ namespace Infrastructure.Data
         public DbSet<Enrollment> Enrollments { get; set; }
         public DbSet<AthleteProfile> AthleteProfiles { get; set; }
         public DbSet<WorkoutPlan> WorkoutPlans { get; set; }
+        public DbSet<TrainingLog> TrainingLogs { get; set; }
+        public DbSet<AthleteMeasurement> AthleteMeasurements { get; set; }
     }
 }

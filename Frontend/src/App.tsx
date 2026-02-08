@@ -5,6 +5,7 @@ import CoursesPage from './pages/Dashboard';    // File: Dashboard.tsx
 import CoachAthletes from './pages/CoachAthletes';
 import AthleteDetail from './pages/AthleteDetail';
 import MyProfile from './pages/MyProfile';
+import DiaryPage from './pages/DiaryPage';
 
 function App() {
   return (
@@ -23,6 +24,8 @@ function App() {
       <Route path="/miei-allenamenti" element={<MyProfile />} /> 
 
       <Route path="/" element={<Navigate to="/login" />} />
+
+      <Route path="/diario" element={<DiaryPage />} />
     </Routes>
   );
 }

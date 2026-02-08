@@ -104,5 +104,44 @@ namespace Api.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+
+        // ==========================================
+// METODO 5: AGGIORNA SCHEDA (PUT)
+// Permette al coach di modificare titolo o contenuto
+// ==========================================
+[HttpPut("{id}")]
+public async Task<IActionResult> UpdatePlan(Guid id, [FromBody] WorkoutPlan updatedPlan)
+{
+    // 1. Identifichiamo il Coach dal Token JWT
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+    if (userIdClaim == null) return Unauthorized();
+    var coachId = Guid.Parse(userIdClaim.Value);
+
+    // 2. Cerchiamo la scheda originale nel DB
+    var existingPlan = await _context.WorkoutPlans.FindAsync(id);
+    if (existingPlan == null) return NotFound("Scheda non trovata.");
+
+    // 3. SICUREZZA: Solo il coach che ha creato la scheda può modificarla
+    if (existingPlan.CoachId != coachId)
+    {
+        return StatusCode(403, "Non hai i permessi per modificare questa scheda.");
     }
+
+    // 4. Aggiorniamo solo i campi necessari
+    existingPlan.Title = updatedPlan.Title;
+    existingPlan.HtmlContent = updatedPlan.HtmlContent;
+    // Nota: AthleteId e CoachId non vengono cambiati per mantenere l'integrità dei dati
+
+    try
+    {
+        await _context.SaveChangesAsync();
+        return Ok(existingPlan);
+    }
+    catch (Exception ex)
+    {
+        return BadRequest($"Errore durante l'aggiornamento: {ex.Message}");
+    }
+}
+    }
+    
 }

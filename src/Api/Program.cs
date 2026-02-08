@@ -11,6 +11,8 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- 1. CONFIGURAZIONE SERVIZI ---
+
 // DB & CORS
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -19,13 +21,13 @@ builder.Services.AddCors(options => {
     options.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
-// Services
+// Dependency Injection
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Swagger
+// Swagger Configuration
 builder.Services.AddSwaggerGen(c => {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "TrainerGo API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme {
@@ -36,7 +38,7 @@ builder.Services.AddSwaggerGen(c => {
     });
 });
 
-// Auth
+// JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => {
         options.TokenValidationParameters = new TokenValidationParameters {
@@ -50,39 +52,43 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
-// --- CONFIGURAZIONE STRUTTURALE (NO DATI FINTI) ---
+// --- 2. INIZIALIZZAZIONE DATABASE (Il pezzo fondamentale) ---
 using (var scope = app.Services.CreateScope())
 {
+    var services = scope.ServiceProvider;
     try
     {
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var context = services.GetRequiredService<ApplicationDbContext>();
         
-        // 1. Assicura che le tabelle esistano
+        // A. CREAZIONE TABELLE MANCANTI
+        // Questo comando crea TrainingLogs e AthleteMeasurements se non esistono!
         context.Database.EnsureCreated(); 
+        Console.WriteLine("✅ Database e tabelle verificati con successo.");
 
-        // 2. Inserisce i RUOLI TECNICI se mancano (Necessario per far funzionare la Login)
+        // B. INSERIMENTO RUOLI (Se mancano)
         if (!context.Roles.Any())
         {
             context.Roles.AddRange(
-                new Role { Id = 1, Name = "Admin" },  // Per il futuro
-                new Role { Id = 2, Name = "User" },   // Utente Normale
-                new Role { Id = 3, Name = "Coach" }   // Istruttore / Amministrazione
+                new Role { Id = 1, Name = "Admin" },
+                new Role { Id = 2, Name = "User" },
+                new Role { Id = 3, Name = "Coach" }
             );
             context.SaveChanges();
-            Console.WriteLine("✅ Struttura Ruoli (Admin, User, Coach) verificata.");
+            Console.WriteLine("✅ Ruoli di base inseriti.");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Errore Init DB: {ex.Message}");
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "❌ ERRORE CRITICO durante l'inizializzazione del Database.");
     }
 }
-// ---------------------------------------------------
 
+// --- 3. MIDDLEWARE PIPELINE ---
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+app.UseCors("AllowAll"); // Importante per React
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
